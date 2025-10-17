@@ -2,14 +2,15 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
-import '../../utils/axios-config'; // Importamos la configuración global de axios
 import React, { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import { SafeAreaView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function LoginScreen() {
     const router = useRouter();
-    const [loading, setLoading] = useState(false); // Nuevo estado para manejo de carga
-    const [error, setError] = useState<string | null>(null); // Nuevo estado para manejo de errores
+    const auth = useAuth();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     // Estados para los campos del formulario
     const [numero_apartamento, setUsername] = useState('');
@@ -52,7 +53,7 @@ export default function LoginScreen() {
             if (!response.data) throw new Error('Respuesta vacía del servidor.');
 
             console.log('Respuesta completa:', response.data);
-            
+
             if (!response.data.data || !response.data.data.token) {
                 console.error('No se recibió token en la respuesta');
                 throw new Error('No se recibió token del servidor');
@@ -61,47 +62,20 @@ export default function LoginScreen() {
             const userData = response.data.data;
             const token = userData.token;
             const rol = userData.rol;
-            
+
             console.log('Token recibido:', token);
             console.log('Rol recibido:', rol);
 
-            try {
-                // Guardar el token JWT
-                console.log('Intentando guardar token en AsyncStorage...');
-                await AsyncStorage.setItem('token', token);
-                console.log('Token guardado exitosamente en AsyncStorage');
-
-                // Verificar que el token se guardó
-                const storedToken = await AsyncStorage.getItem('token');
-                console.log('Token recuperado de AsyncStorage:', storedToken);
-
-                if (!storedToken) {
-                    console.error('El token no se guardó correctamente');
-                    throw new Error('El token no se guardó correctamente');
-                }
-
-                // Configurar el token en los headers por defecto de axios
-                console.log('Configurando token en headers de axios...');
-                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-                console.log('Token configurado en axios correctamente');
-            } catch (error) {
-                console.error('Error detallado al manejar el token:', error);
-                if (error instanceof Error) {
-                    throw new Error(`Error al manejar el token: ${error.message}`);
-                } else {
-                    throw new Error('Error desconocido al manejar el token');
-                }
-            }
+            // Usar el contexto de autenticación para manejar el login
+            await auth.login(token, rol);
 
             switch (rol) {
                 case 'admin':
-                    router.replace('/admin/announcements' as never);
+                    router.replace('/(admin)/newannouncements');
                     break;
                 case 'residente':
-                    router.replace('/resident/announcements' as never);
+                    router.replace('/(resident)/announcements');
                     break;
-                default:
-                    router.replace('/resident/announcements' as never);
             }
 
         } catch (error: any) {
@@ -126,7 +100,7 @@ export default function LoginScreen() {
                 } else if (error.response) {
                     const status = error.response.status;
                     console.error('Datos del error del servidor:', error.response.data);
-                    
+
                     if (status === 401) {
                         errorMessage = 'Usuario o contraseña incorrectos.';
                     } else if (status === 404) {
@@ -204,10 +178,15 @@ export default function LoginScreen() {
                     </Text>
                 </TouchableOpacity>
 
-                {/* Enlace con Raleway-Regular */}
-                <TouchableOpacity>
-                    <Text style={styles.forgotPasswordText}>¿Olvidó su contraseña?</Text>
-                </TouchableOpacity>
+                {/* Enlaces con Raleway-Regular */}
+                <View style={styles.linksContainer}>
+                    <TouchableOpacity onPress={() => router.push('/(auth)/recover-password')}>
+                        <Text style={styles.linkText}>¿Olvidó su contraseña?</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
+                        <Text style={styles.linkText}>Registrarse</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         </SafeAreaView>
     );
@@ -216,7 +195,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: '#F5F5F5',
+        backgroundColor: '#fff',
         alignItems: 'center',
         justifyContent: 'center', // Centrado vertical para la pantalla de login
     },
@@ -229,8 +208,8 @@ const styles = StyleSheet.create({
     },
     logoText: {
         fontSize: 32, // Un poco más grande
-        fontFamily: 'Raleway-Bold', // 🔑 APLICADO RALEWAY BOLD
-        fontWeight: 'normal',
+        fontFamily: 'SF Pro Text',
+        fontWeight: '600',
         color: '#001F3F',
         marginTop: 10,
     },
@@ -251,27 +230,26 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: 16,
-        fontFamily: 'Raleway-Bold', // 🔑 APLICADO RALEWAY BOLD
-        fontWeight: 'normal',
+        fontFamily: 'SF Pro Text',
+        fontWeight: '600',
         color: '#333',
         marginBottom: 8,
     },
     input: {
-        backgroundColor: '#E8E8E8',
+        backgroundColor: '#fff',
         borderRadius: 10, // Más redondeado
         padding: 12,
         fontSize: 16,
         marginBottom: 20,
-        fontFamily: 'Raleway-Regular', // 🔑 APLICADO RALEWAY REGULAR
+        fontFamily: 'SF Pro Text',
         color: '#000', // Asegura que el texto ingresado se vea bien
     },
     loginButton: {
-        backgroundColor: '#6A87D8', // Color de acento
+        backgroundColor: '#6A87D8',
         borderRadius: 10,
         padding: 15,
         alignItems: 'center',
         marginBottom: 15,
-        // Efecto de sombra para el botón
         shadowColor: '#6A87D8',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
@@ -281,18 +259,24 @@ const styles = StyleSheet.create({
     loginButtonText: {
         color: 'white',
         fontSize: 18,
-        fontFamily: 'Raleway-Bold', // 🔑 APLICADO RALEWAY BOLD
-        fontWeight: 'normal',
+        fontFamily: 'SF Pro Text',
+        fontWeight: '600',
     },
-    forgotPasswordText: {
-        color: '#6A87D8', // Color de acento
-        textAlign: 'center',
+    linksContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        width: '100%',
+        marginTop: 10,
+    },
+    linkText: {
+        color: '#6A87D8',
         fontSize: 14,
-        fontFamily: 'Raleway-Regular', // 🔑 APLICADO RALEWAY REGULAR
+        fontFamily: 'SF Pro Text',
         textDecorationLine: 'underline',
+        textAlign: 'center',
     },
     errorText: {
-        fontFamily: 'Raleway-Regular',
+        fontFamily: 'SF Pro Text',
         fontSize: 14,
         color: 'red',
         textAlign: 'center',

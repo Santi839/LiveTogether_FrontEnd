@@ -78,9 +78,9 @@ const ReservationOption = ({ option }: { option: ReservationSummary }) => {
       </View>
       <TouchableOpacity
         style={styles.reserveButton}
-        onPress={() => router.push({
-          pathname: '/resident/reservation_details',
-          params: { 
+        onPress={() => router.replace({
+            pathname: '/(resident)/reservation_details',
+          params: {
             id: option.id,
             title: option.title,
             maxCapacity: parseInt(option.subtitle.split(': ')[1])
@@ -178,4 +178,3 @@ const styles = StyleSheet.create({
     fontWeight: 'normal',
   },
 });
-

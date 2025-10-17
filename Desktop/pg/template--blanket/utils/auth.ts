@@ -46,7 +46,7 @@ export const checkAuth = async () => {
         return true;
     } catch (error) {
         await removeAuthToken();
-        router.replace('/auth/login');
+        router.replace('/(auth)/login');
         return false;
     }
 };

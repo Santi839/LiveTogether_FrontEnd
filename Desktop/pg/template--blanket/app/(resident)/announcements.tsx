@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import '../../utils/axios-config';
 import {
   ActivityIndicator,
   Image,
@@ -13,8 +12,9 @@ import {
   Text,
   View,
 } from 'react-native';
+import { colorFondo } from '../../app/index';
 import PageHeader from '../../components/PageHeader';
-// Quitamos la importación de axios-config ya que se manejará globalmente
+import '../../utils/axios-config';
 
 
 // IMPORTACIONES LOCALES DE IMÁGENES (Asegúrate de que estas rutas sean correctas)
@@ -53,9 +53,9 @@ const AnnouncementPost = ({ post }: { post: Announcement }) => {
           resizeMode="cover"
         />
       )}
-      
+
       <Text style={styles.postText}>{post.contenido}</Text>
-      
+
       <View style={styles.postFooter}>
         <View style={[styles.tagContainer, { backgroundColor: post.destacado ? '#FFD700' : '#E8E8E8' }]}>
           <Text style={styles.tagText}>{post.tipo}</Text>
@@ -72,12 +72,12 @@ export default function AnnouncementsScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-// LÓGICA DE CONEXIÓN CON LA BD usando useEffect
+  // LÓGICA DE CONEXIÓN CON LA BD usando useEffect
   useEffect(() => {
     const fetchAnnouncements = async () => {
       try {
         setLoading(true);
-        
+
         // Verificar si tenemos token
         const token = await AsyncStorage.getItem('token');
         if (!token) {
@@ -86,7 +86,7 @@ export default function AnnouncementsScreen() {
 
         console.log('Solicitando anuncios...');
         console.log('Token:', token);
-        
+
         const response = await axios.get('/api/anuncios/', {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -102,7 +102,7 @@ export default function AnnouncementsScreen() {
           'Accept': 'application/json',
         });
         console.log('Respuesta del servidor:', response.data);
-        
+
         if (!response.data) {
           throw new Error('No se recibieron datos del servidor');
         }
@@ -111,11 +111,11 @@ export default function AnnouncementsScreen() {
         setError(null);
       } catch (err: any) {
         console.error("Error al cargar anuncios:", err);
-        
+
         if (axios.isAxiosError(err)) {
           if (err.response?.status === 401) {
             setError("Sesión expirada. Por favor, inicia sesión nuevamente.");
-            router.replace('/auth/login');
+            router.replace('/(auth)/login');
           } else if (err.response?.status === 404) {
             setError("No se encontraron anuncios.");
           } else if (err.response) {
@@ -126,7 +126,7 @@ export default function AnnouncementsScreen() {
         } else {
           setError(err.message || "Ocurrió un error inesperado.");
         }
-        
+
         setAnnouncements([]);
       } finally {
         setLoading(false);
@@ -190,7 +190,7 @@ export default function AnnouncementsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: colorFondo,
   },
   contentContainer: {
     paddingBottom: 20,
@@ -200,13 +200,13 @@ const styles = StyleSheet.create({
   },
   greetingText: {
     fontSize: 20,
-    fontFamily: 'Raleway-Regular',
+    fontFamily: 'SF Pro Text',
     color: '#555',
   },
   mainTitle: {
     fontSize: 25,
-    fontFamily: 'Raleway-Bold',
-    fontWeight: 'normal',
+    fontFamily: 'SF Pro Text',
+    fontWeight: '600',
     color: '#001F3F',
     marginTop: 5,
     textAlign: 'left',
@@ -235,26 +235,27 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   postUserText: {
-    fontFamily: 'Raleway-Bold',
-    fontWeight: 'normal',
+    fontFamily: 'SF Pro Text',
+    fontWeight: '600',
     fontSize: 16,
     color: '#333',
     flex: 1,
   },
   dateText: {
-    fontFamily: 'Raleway-Regular',
+    fontFamily: 'SF Pro Text',
     fontSize: 12,
     color: '#666',
     marginLeft: 10,
   },
   postTitle: {
-    fontFamily: 'Raleway-Bold',
+    fontFamily: 'SF Pro Text',
+    fontWeight: '600',
     fontSize: 18,
     color: '#001F3F',
     marginBottom: 10,
   },
   postText: {
-    fontFamily: 'Raleway-Regular',
+    fontFamily: 'SF Pro Text',
     fontSize: 16,
     color: '#333',
     marginBottom: 10,
@@ -278,7 +279,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   tagText: {
-    fontFamily: 'Raleway-Regular',
+    fontFamily: 'SF Pro Text',
     fontSize: 12,
     color: '#333',
   },
@@ -289,7 +290,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   newBadgeText: {
-    fontFamily: 'Raleway-Bold',
+    fontFamily: 'SF Pro Text',
+    fontWeight: '600',
     fontSize: 12,
     color: 'white',
   },
@@ -298,16 +300,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    fontFamily: 'Raleway-Regular',
+    fontFamily: 'SF Pro Text',
     fontSize: 16,
     color: '#555',
     marginTop: 10,
   },
   errorText: {
-    fontFamily: 'Raleway-Bold',
+    fontFamily: 'SF Pro Text',
     fontSize: 18,
     color: 'red',
-    fontWeight: 'normal',
+    fontWeight: '600',
     textAlign: 'center',
   },
 });

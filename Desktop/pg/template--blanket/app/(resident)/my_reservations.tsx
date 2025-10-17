@@ -160,9 +160,9 @@ export default function MyReservationsScreen() {
                     <View style={styles.emptyContainer}>
                         <FontAwesome5 name="calendar-times" size={50} color={ACCENT_COLOR} />
                         <Text style={styles.emptyText}>No tienes reservas activas</Text>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.createReservationButton}
-                            onPress={() => router.push('/resident/reservations')}
+                            onPress={() => router.push('/(resident)/reservations')}
                         >
                             <Text style={styles.createReservationText}>Crear una reserva</Text>
                         </TouchableOpacity>
