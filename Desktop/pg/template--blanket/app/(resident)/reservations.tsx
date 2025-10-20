@@ -1,8 +1,6 @@
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
-  Dimensions,
-  Image,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -10,15 +8,11 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Image,
 } from 'react-native';
-import PageHeader from '../../components/PageHeader';
+import PageHeader from '../../components/PageHeader'; // Se mantiene tu componente de cabecera
 
-const screenWidth = Dimensions.get('window').width;
-const PROFILE_IMAGE = require('../../assets/images/PROFILE_IMAGE.png');
-// ------------------------------------------------------------------
-
-// ------------------------------------------------------------------
-
+// --- Datos de las reservaciones (sin cambios) ---
 const images = {
   pool: require('../../assets/images/piscina.jpg'),
   cancha: require('../../assets/images/cancha.png'),
@@ -60,50 +54,48 @@ const reservationsSummary: ReservationSummary[] = [
   },
 ];
 
+// --- Componente de Opción de Reserva (Rediseñado) ---
 const ReservationOption = ({ option }: { option: ReservationSummary }) => {
   const router = useRouter();
 
-  const imageSource = typeof option.image === 'string'
-    ? { uri: option.image }
-    : option.image;
+  // Función para manejar la navegación
+  const handlePress = () => {
+    router.replace({
+      pathname: '/(resident)/reservation_details',
+      params: {
+        id: option.id,
+        title: option.title,
+        maxCapacity: parseInt(option.subtitle.split(': ')[1] || '0'), // Previene errores si el formato cambia
+      },
+    } as never);
+  };
 
   return (
-    <View style={styles.optionContainer}>
-      <Image style={styles.optionImage} source={imageSource} resizeMode="cover" />
-      <View style={styles.textOverlay}>
-        <Text style={styles.optionTitle}>{option.title}</Text>
-        {option.subtitle !== ' ' && (
-          <Text style={styles.optionSubtitle}>{option.subtitle}</Text>
-        )}
+    <TouchableOpacity style={styles.card} onPress={handlePress}>
+      {/* Imagen */}
+      <Image source={option.image} style={styles.cardImage} />
+
+      {/* Contenedor de texto */}
+      <View style={styles.cardTextContainer}>
+        <Text style={styles.cardTitle}>{option.title}</Text>
+        <Text style={styles.cardSubtitle}>{option.subtitle}</Text>
       </View>
-      <TouchableOpacity
-        style={styles.reserveButton}
-        onPress={() => router.replace({
-            pathname: '/(resident)/reservation_details',
-          params: {
-            id: option.id,
-            title: option.title,
-            maxCapacity: parseInt(option.subtitle.split(': ')[1])
-          }
-        } as never)}
-      >
-        <Text style={styles.reserveButtonText}>Reservar</Text>
-      </TouchableOpacity>
-    </View>
+
+      {/* Ícono indicador de acción */}
+      <Text style={styles.cardIcon}>{'>'}</Text>
+    </TouchableOpacity>
   );
 };
 
+// --- Pantalla Principal (con nuevos estilos) ---
 export default function ReservationsScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" />
-      <ScrollView contentContainerStyle={styles.contentContainer}>
-        <View>
-          <PageHeader title="Reservaciones" />
-          <View style={styles.titleContainer}>
-            <Text style={styles.mainTitle}>¿Qué reservaremos hoy?</Text>
-          </View>
-        </View>
+      <PageHeader title="Reservaciones" />
+
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.mainTitle}>¿Qué deseas reservar?</Text>
 
         {reservationsSummary.map((option) => (
           <ReservationOption key={option.id} option={option} />
@@ -112,69 +104,57 @@ export default function ReservationsScreen() {
     </SafeAreaView>
   );
 }
+
+// --- Hoja de Estilos (Completamente renovada para un look minimalista) ---
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#F7F7F7', // Un fondo gris muy claro para dar un toque suave
   },
-  contentContainer: {
-    paddingBottom: 20,
-  },
-  titleContainer: {
-    padding: 15,
+  container: {
+    paddingHorizontal: 16,
+    paddingBottom: 24,
   },
   mainTitle: {
-    fontSize: 25,
+    fontSize: 28,
     fontFamily: 'Raleway-Bold',
-    fontWeight: 'normal',
-    color: '#001F3F',
-    marginTop: 5,
-    textAlign: 'left',
+    color: '#1A1A1A', // Un negro menos intenso
+    marginVertical: 20,
   },
-  optionContainer: {
-    backgroundColor: 'white',
-    borderRadius: 15,
-    marginHorizontal: 15,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E8E8E8', // Borde sutil
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    marginBottom: 16,
     overflow: 'hidden',
   },
-  optionImage: {
-    width: '100%',
-    height: 180,
+  cardImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 8,
   },
-  textOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    padding: 10,
+  cardTextContainer: {
+    flex: 1, // Ocupa el espacio disponible
+    marginLeft: 12,
   },
-  optionTitle: {
-    fontSize: 20,
+  cardTitle: {
+    fontSize: 18,
     fontFamily: 'Raleway-Bold',
-    fontWeight: 'normal',
-    color: 'white',
+    color: '#333333',
+    marginBottom: 4,
   },
-  optionSubtitle: {
+  cardSubtitle: {
     fontSize: 14,
     fontFamily: 'Raleway-Regular',
-    color: 'white',
+    color: '#666666',
   },
-  reserveButton: {
-    backgroundColor: '#6A87D8',
-    padding: 15,
-    alignItems: 'center',
-  },
-  reserveButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontFamily: 'Raleway-Bold',
-    fontWeight: 'normal',
+  cardIcon: {
+    fontSize: 20,
+    color: '#CCCCCC', // Un color de ícono discreto
+    fontWeight: 'bold',
   },
 });

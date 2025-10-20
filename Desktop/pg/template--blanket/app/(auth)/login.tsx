@@ -208,8 +208,7 @@ const styles = StyleSheet.create({
     },
     logoText: {
         fontSize: 32, // Un poco más grande
-        fontFamily: 'SF Pro Text',
-        fontWeight: '600',
+        fontFamily: 'Raleway-Bold',
         color: '#001F3F',
         marginTop: 10,
     },
@@ -230,8 +229,7 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: 16,
-        fontFamily: 'SF Pro Text',
-        fontWeight: '600',
+        fontFamily: 'Raleway-Bold',
         color: '#333',
         marginBottom: 8,
     },
@@ -241,7 +239,7 @@ const styles = StyleSheet.create({
         padding: 12,
         fontSize: 16,
         marginBottom: 20,
-        fontFamily: 'SF Pro Text',
+        fontFamily: 'Raleway-Regular',
         color: '#000', // Asegura que el texto ingresado se vea bien
     },
     loginButton: {
@@ -259,8 +257,7 @@ const styles = StyleSheet.create({
     loginButtonText: {
         color: 'white',
         fontSize: 18,
-        fontFamily: 'SF Pro Text',
-        fontWeight: '600',
+        fontFamily: 'Raleway-Bold',
     },
     linksContainer: {
         flexDirection: 'row',
@@ -271,12 +268,12 @@ const styles = StyleSheet.create({
     linkText: {
         color: '#6A87D8',
         fontSize: 14,
-        fontFamily: 'SF Pro Text',
+        fontFamily: 'Raleway-Regular',
         textDecorationLine: 'underline',
         textAlign: 'center',
     },
     errorText: {
-        fontFamily: 'SF Pro Text',
+        fontFamily: 'Raleway-Regular',
         fontSize: 14,
         color: 'red',
         textAlign: 'center',

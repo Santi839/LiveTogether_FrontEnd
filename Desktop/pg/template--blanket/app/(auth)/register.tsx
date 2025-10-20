@@ -163,8 +163,7 @@ const styles = StyleSheet.create({
   },
   logoText: {
     fontSize: 32,
-    fontFamily: 'SF Pro Text',
-    fontWeight: '600',
+    fontFamily: 'Raleway-Bold',
     color: '#001F3F',
     marginTop: 10,
   },
@@ -191,8 +190,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontFamily: 'SF Pro Text',
-    fontWeight: '600',
+    fontFamily: 'Raleway-Bold',
     color: '#333',
     marginBottom: 8,
   },

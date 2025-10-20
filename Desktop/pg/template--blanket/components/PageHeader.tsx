@@ -42,8 +42,7 @@ const styles = StyleSheet.create({
     },
     logoText: {
         fontSize: 22,
-        fontFamily: 'SF Pro Text',
-        fontWeight: '600',
+        fontFamily: 'Raleway-Bold',
         color: MAIN_COLOR,
         marginLeft: 8,
     },

@@ -472,8 +472,7 @@ const styles = StyleSheet.create({
     doneButtonText: {
         color: '#fff',
         fontSize: 16,
-        fontFamily: 'SF Pro Text',
-        fontWeight: '600',
+        fontFamily: 'Raleway-Bold',
     },
     dateTimeButton: {
         backgroundColor: '#fff',
@@ -508,12 +507,12 @@ const styles = StyleSheet.create({
         padding: 8,
         marginVertical: 5,
         fontSize: 16,
-        fontFamily: 'SF Pro Text',
+        fontFamily: 'Raleway-Regular',
         textAlign: 'center',
     },
     maxGuestsText: {
         fontSize: 12,
-        fontFamily: 'SF Pro Text',
+        fontFamily: 'Raleway-Regular',
         color: '#666',
         textAlign: 'center',
         marginTop: 5,
@@ -533,15 +532,13 @@ const styles = StyleSheet.create({
     },
     mainTitle: {
         fontSize: 28,
-        fontFamily: 'SF Pro Text',
-        fontWeight: '600',
+        fontFamily: 'Raleway-Bold',
         color: MAIN_COLOR,
         flexShrink: 1
     },
     costText: {
         fontSize: 18,
-        fontFamily: 'SF Pro Text',
-        fontWeight: '600',
+        fontFamily: 'Raleway-Bold',
         color: ACCENT_COLOR,
         backgroundColor: `${ACCENT_COLOR}20`,
         padding: 5,
@@ -550,21 +547,20 @@ const styles = StyleSheet.create({
     },
     subTitle: {
         fontSize: 18,
-        fontFamily: 'SF Pro Text',
-        fontWeight: '600',
+        fontFamily: 'Raleway-Bold',
         color: ACCENT_COLOR,
         marginTop: 15,
         marginBottom: 10,
     },
     descriptionText: {
         fontSize: 16,
-        fontFamily: 'SF Pro Text',
+        fontFamily: 'Raleway-Regular',
         color: TEXT_COLOR,
         lineHeight: 24
     },
     detailText: {
         fontSize: 15,
-        fontFamily: 'SF Pro Text',
+        fontFamily: 'Raleway-Regular',
         color: TEXT_COLOR,
         lineHeight: 22,
     },
@@ -595,13 +591,12 @@ const styles = StyleSheet.create({
     },
     labelTime: {
         fontSize: 14,
-        fontFamily: 'SF Pro Text',
+        fontFamily: 'Raleway-Regular',
         color: TEXT_COLOR,
     },
     valueTime: {
         fontSize: 16,
-        fontFamily: 'SF Pro Text',
-        fontWeight: '600',
+        fontFamily: 'Raleway-Bold',
         color: MAIN_COLOR,
         marginTop: 3,
     },
