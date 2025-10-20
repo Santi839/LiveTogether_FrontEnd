@@ -32,7 +32,7 @@ export const setAuthToken = (token: string) => {
 // -----------------------------------------------------------
 
 // Configurar URL base de la API
-axios.defaults.baseURL = 'https://4ldjl2hx-8000.use2.devtunnels.ms'; // URL base proporcionada por el usuario
+axios.defaults.baseURL = 'http://localhost:8000'; // URL base proporcionada por el usuario
 
 // Configurar headers por defecto
 axios.defaults.headers.common['Content-Type'] = 'application/json';

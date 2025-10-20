@@ -14,18 +14,21 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundImage": "./assets/images/icon.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.templateblanket"
     },
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png",
       "publicPath": "/assets/",
-      "includePaths": ["./assets/fonts"]
+      "includePaths": [
+        "./assets/fonts"
+      ]
     },
     "plugins": [
       "expo-router",
