@@ -10,9 +10,9 @@ import {
   View,
   Image,
 } from 'react-native';
-import PageHeader from '../../components/PageHeader'; // Se mantiene tu componente de cabecera
+import PageHeader from '../../components/PageHeader';
 
-// --- Datos de las reservaciones (sin cambios) ---
+// --- Datos (sin cambios) ---
 const images = {
   pool: require('../../assets/images/piscina.jpg'),
   cancha: require('../../assets/images/cancha.png'),
@@ -28,6 +28,7 @@ interface ReservationSummary {
 }
 
 const reservationsSummary: ReservationSummary[] = [
+  // ... (datos sin cambios)
   {
     id: '1',
     title: 'Piscina',
@@ -54,40 +55,34 @@ const reservationsSummary: ReservationSummary[] = [
   },
 ];
 
-// --- Componente de Opción de Reserva (Rediseñado) ---
+// --- Componente ReservationOption (sin cambios) ---
 const ReservationOption = ({ option }: { option: ReservationSummary }) => {
   const router = useRouter();
 
-  // Función para manejar la navegación
   const handlePress = () => {
     router.replace({
       pathname: '/(resident)/reservation_details',
       params: {
         id: option.id,
         title: option.title,
-        maxCapacity: parseInt(option.subtitle.split(': ')[1] || '0'), // Previene errores si el formato cambia
+        maxCapacity: parseInt(option.subtitle.split(': ')[1] || '0'),
       },
     } as never);
   };
 
   return (
     <TouchableOpacity style={styles.card} onPress={handlePress}>
-      {/* Imagen */}
       <Image source={option.image} style={styles.cardImage} />
-
-      {/* Contenedor de texto */}
       <View style={styles.cardTextContainer}>
         <Text style={styles.cardTitle}>{option.title}</Text>
         <Text style={styles.cardSubtitle}>{option.subtitle}</Text>
       </View>
-
-      {/* Ícono indicador de acción */}
       <Text style={styles.cardIcon}>{'>'}</Text>
     </TouchableOpacity>
   );
 };
 
-// --- Pantalla Principal (con nuevos estilos) ---
+// --- Componente ReservationsScreen (sin cambios) ---
 export default function ReservationsScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -105,11 +100,14 @@ export default function ReservationsScreen() {
   );
 }
 
-// --- Hoja de Estilos (Completamente renovada para un look minimalista) ---
+// --- [ACTUALIZADO] Hoja de Estilos ---
+
+const ACCENT_COLOR = '#6A92E5';
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F7F7F7', // Un fondo gris muy claro para dar un toque suave
+    backgroundColor: '#F7F7F7',
   },
   container: {
     paddingHorizontal: 16,
@@ -118,14 +116,14 @@ const styles = StyleSheet.create({
   mainTitle: {
     fontSize: 28,
     fontFamily: 'Raleway-Bold',
-    color: '#1A1A1A', // Un negro menos intenso
+    color: ACCENT_COLOR,
     marginVertical: 20,
   },
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E8E8E8', // Borde sutil
+    borderColor: '#E8E8E8',
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
@@ -138,13 +136,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   cardTextContainer: {
-    flex: 1, // Ocupa el espacio disponible
+    flex: 1,
     marginLeft: 12,
   },
   cardTitle: {
     fontSize: 18,
     fontFamily: 'Raleway-Bold',
-    color: '#333333',
+    color: ACCENT_COLOR, // --- [ACTUALIZADO] ---
     marginBottom: 4,
   },
   cardSubtitle: {
@@ -154,7 +152,7 @@ const styles = StyleSheet.create({
   },
   cardIcon: {
     fontSize: 20,
-    color: '#CCCCCC', // Un color de ícono discreto
+    color: ACCENT_COLOR,
     fontWeight: 'bold',
   },
 });
