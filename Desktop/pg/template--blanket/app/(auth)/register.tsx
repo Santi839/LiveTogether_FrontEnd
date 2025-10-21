@@ -5,32 +5,35 @@ import React, { useState } from 'react';
 import { SafeAreaView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-// ✅ 1. Define la "forma" de tu estado del formulario con una interface
+// ✅ CAMBIO 1: Agrega 'torre' a la "forma" de tu estado
 interface RegisterFormState {
   numero_apartamento: string;
   nombre_completo: string;
   correo: string;
   password: string;
   confirmPassword: string;
+  torre: string; // <-- Agregado
 }
 
 export default function RegisterScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   
-  // ✅ 2. Usa la interface para tipar tu estado y dale los valores iniciales
+  // ✅ CAMBIO 2: Inicializa 'torre' en el estado
   const [form, setForm] = useState<RegisterFormState>({
     numero_apartamento: '',
     nombre_completo: '',
     correo: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    torre: '' // <-- Agregado
   });
 
   const handleRegister = async () => {
     if (loading) return;
 
-    if (!form.numero_apartamento || !form.password || !form.confirmPassword || !form.nombre_completo || !form.correo) {
+    // ✅ CAMBIO 3: Agrega 'torre' a la validación de campos
+    if (!form.numero_apartamento || !form.password || !form.confirmPassword || !form.nombre_completo || !form.correo || !form.torre) {
       Toast.show({ type: 'error', text1: 'Campos incompletos', text2: 'Todos los campos son obligatorios' });
       return;
     }
@@ -43,28 +46,41 @@ export default function RegisterScreen() {
     setLoading(true);
 
     try {
-      // ✅ 3. Asegúrate de que las claves del payload coincidan con lo que espera tu backend
+      // ✅ CAMBIO 4: Ajusta el payload para que coincida 100% con el serializer
       const payload = {
-        numero_apartamento: parseInt(form.numero_apartamento, 10), // Convertido a número
+        // No uses parseInt, la DB espera 'character varying' (un string)
+        numero_apartamento: form.numero_apartamento, 
         nombre_completo: form.nombre_completo,
         correo: form.correo,
         password: form.password,
+        // El backend espera 'password_confirmation', no 'confirmPassword'
+        password_confirmation: form.confirmPassword, // <-- Agregado
+        torre: form.torre, // <-- Agregado
         rol: 'residente'
       };
 
       console.log("Enviando Payload:", JSON.stringify(payload, null, 2));
 
-      const response = await axios.post('https://4ldjl2hx-8000.use2.devtunnels.ms/api/usuarios/registro/', payload);
+      const response = await axios.post('http://localhost:8000/api/usuarios/registro/', payload);
 
       Toast.show({ type: 'success', text1: 'Registro exitoso', text2: 'Tu cuenta ha sido creada correctamente' });
       router.replace('/(auth)/login');
 
     } catch (error: any) {
       console.error('Error del servidor:', error.response?.data);
+      
       let errorMessage = 'Error de conexión. Inténtalo más tarde.';
 
       if (axios.isAxiosError(error) && error.response) {
-        errorMessage = error.response.data.message || 'Los datos enviados son inválidos.';
+        // Manejar errores de validación del backend
+        if (error.response.data.errors) {
+            const errors = error.response.data.errors;
+            // Tomar el primer mensaje de error
+            const firstErrorKey = Object.keys(errors)[0];
+            errorMessage = errors[firstErrorKey][0]; 
+        } else {
+            errorMessage = error.response.data.message || 'Los datos enviados son inválidos.';
+        }
       }
 
       Toast.show({ type: 'error', text1: 'Error de registro', text2: errorMessage });
@@ -82,15 +98,27 @@ export default function RegisterScreen() {
       </View>
       <View style={styles.card}>
         <Text style={styles.title}>Registro</Text>
+        
         <Text style={styles.label}>Número de Apartamento</Text>
         <TextInput
           style={styles.input}
           placeholder="Ej: 101"
           placeholderTextColor="#888"
-          keyboardType="numeric"
+          // keyboardType="numeric" // Quitado para permitir aptos como "101A"
           value={form.numero_apartamento}
           onChangeText={(text) => setForm({ ...form, numero_apartamento: text })}
         />
+
+        {/* ✅ CAMBIO 5: Agrega el campo 'Torre' al formulario */}
+        <Text style={styles.label}>Torre</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Ej: 1"
+          placeholderTextColor="#888"
+          value={form.torre}
+          onChangeText={(text) => setForm({ ...form, torre: text })}
+        />
+
         <Text style={styles.label}>Nombre Completo</Text>
         <TextInput
           style={styles.input}

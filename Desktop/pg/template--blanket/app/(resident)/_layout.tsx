@@ -28,6 +28,14 @@ export default function ResidentLayout() {
           headerShown: false,
         }}
       />
+      <Tabs.Screen
+        name="vehicules"
+        options={{
+          // 🛑 Oculta el botón de la barra de pestañas
+          tabBarButton: () => null, 
+          headerShown: false,
+        }}
+      />
       {/* 1. Pestañas VISIBLES */}
       <Tabs.Screen
         name="announcements"
@@ -76,6 +84,15 @@ export default function ResidentLayout() {
           headerShown: false,
         }}
       />
+      <Tabs.Screen
+        name="guests"
+        options={{
+          // 🛑 Oculta el botón de la barra de pestañas
+          tabBarButton: () => null, 
+          headerShown: false,
+        }}
+      />
+      
     </Tabs>
   );
 }

@@ -18,7 +18,7 @@ export default function AdminLayout() {
       }}
     >
       <Tabs.Screen
-        name="announcements" // Mapea a announcements.tsx
+        name="newannouncements" // Mapea a announcements.tsx
         options={{
           title: 'Subir Anuncios',
           tabBarIcon: ({ color, focused }) => (
@@ -27,7 +27,7 @@ export default function AdminLayout() {
         }}
       />
       <Tabs.Screen
-        name="reservations" // Mapea a reservations.tsx
+        name="reservationsgestion" // Mapea a reservations.tsx
         options={{
           title: 'Gestión de Reservas',
           tabBarIcon: ({ color, focused }) => (

@@ -25,7 +25,6 @@ interface Vehicle {
   id: number;
   placa: string;
   tipo: 'carro' | 'moto';
-  num_parqueadero: number | null;
 }
 
 type VehicleType = 'carro' | 'moto';
@@ -44,7 +43,7 @@ export default function VehiclesScreen() {
       setIsLoading(true);
       try {
         // --- RUTA CORREGIDA ---
-        const response = await axios.get('/usuarios/vehiculos/');
+        const response = await axios.get('http://localhost:8000/api/vehiculos/');
         setVehicles(response.data);
       } catch (error) {
         console.error('Error fetching vehicles:', error);
@@ -104,7 +103,7 @@ export default function VehiclesScreen() {
       };
       
       // --- RUTA CORREGIDA ---
-      const response = await axios.post('/usuarios/vehiculos/', payload);
+      const response = await axios.post('/api/vehiculos/', payload);
       
       setVehicles([...vehicles, response.data]);
       setNewPlaca('');
@@ -136,7 +135,7 @@ export default function VehiclesScreen() {
             setIsMutating(true);
             try {
               // --- RUTA CORREGIDA (con la barra al final) ---
-              await axios.delete(`/usuarios/vehiculos/${vehicleToDelete.id}/`);
+              await axios.delete(`/api/vehiculos/${vehicleToDelete.id}/`);
               
               setVehicles(vehicles.filter((v) => v.id !== vehicleToDelete.id));
               Alert.alert('Éxito', 'Vehículo eliminado.');

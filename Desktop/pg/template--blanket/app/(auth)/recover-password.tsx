@@ -13,7 +13,7 @@ export default function RecoverPasswordScreen() {
     }
 
     try {
-      const response = await axios.post('https://4ldjl2hx-8000.use2.devtunnels.ms/api/usuarios/reset-password', {
+      const response = await axios.post('https://localhost:8000/api/usuarios/reset-password', {
         email,
       });
 

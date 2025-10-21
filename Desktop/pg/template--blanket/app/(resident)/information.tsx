@@ -18,7 +18,7 @@ import {
 
 import { useAuth } from '../../contexts/AuthContext';
 
-// --- Interface y datos iniciales (sin cambios) ---
+// --- Interface y datos iniciales ---
 interface UserData {
     nombre_completo: string;
     correo: string;
@@ -37,7 +37,7 @@ const initialUserData: UserData = {
 
 const SECONDARY_COLOR = '#6A92E5';
 
-// --- Componente InfoRow (sin cambios) ---
+// --- Componente InfoRow ---
 const InfoRow = ({ iconName, label, value, onPress }: { iconName: string, label: string, value?: string, onPress?: () => void }) => {
     const content = (
         <View style={styles.infoRowContent}>
@@ -63,15 +63,14 @@ export default function InformationScreen() {
     const [userData, setUserData] = useState<UserData>(initialUserData);
     const [loading, setLoading] = useState(true);
 
-    // --- Lógica de carga de datos (sin cambios) ---
+    // --- Lógica de carga de datos ---
     useEffect(() => {
         const fetchUserData = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get('/api/usuarios/');
-
-                if (response.data && response.data.length > 0) {
-                    const user = response.data[0];
+                const response = await axios.get('/api/usuarios/me/');
+                if (response.data) {
+                    const user = response.data; 
                     setUserData({
                         nombre_completo: user.nombre_completo || '',
                         correo: user.correo || '',
@@ -94,25 +93,27 @@ export default function InformationScreen() {
         fetchUserData();
     }, []);
     
-    // --- Lógica de Logout (mejorada con logs y debug) ---
+    // ✅ --- CAMBIO: Función de Logout con Diagnóstico ---
     const handleLogout = () => {
+        // Esta línea DEBE aparecer en tu consola de terminal
+        console.log('--- ¡BOTÓN PRESIONADO! ---'); 
+        
+        // Esta alerta DEBE tener el título "PRUEBA DE CLICK"
         Alert.alert(
-            'Cerrar Sesión',
-            '¿Estás seguro de que quieres cerrar la sesión?',
+            'PRUEBA DE CLICK', // <--- Título de prueba
+            'Si ves esto, el botón SÍ funciona. Presiona Aceptar para salir.',
             [
                 { text: 'Cancelar', style: 'cancel' },
                 {
-                    text: 'Aceptar',
+                    text: 'Aceptar (Logout Real)',
                     onPress: async () => {
                         try {
                             console.log('Iniciando proceso de logout...');
                             await logout();
                             console.log('Logout completado exitosamente');
-                            // Como backup, forzamos la redirección si no salió
                             router.replace('/(auth)/login');
                         } catch (error: any) {
                             console.error('Error detallado al cerrar sesión:', error);
-                            console.error('Mensaje:', error.message);
                             if (error.response) {
                                 console.error('Respuesta del servidor:', error.response.data);
                             }
@@ -127,34 +128,12 @@ export default function InformationScreen() {
         );
     };
 
-    // Botón temporal para debug (quitar después)
-    const debugLogout = async () => {
-        try {
-            const token = await AsyncStorage.getItem('token');
-            const role = await AsyncStorage.getItem('userRole');
-            console.log('Debug - Estado antes del logout:');
-            console.log('Token:', token ? 'Existe' : 'No existe');
-            console.log('Role:', role);
-            
-            await logout();
-            
-            const tokenAfter = await AsyncStorage.getItem('token');
-            const roleAfter = await AsyncStorage.getItem('userRole');
-            console.log('Debug - Estado después del logout:');
-            console.log('Token:', tokenAfter ? 'Existe' : 'No existe');
-            console.log('Role:', roleAfter);
-        } catch (e) {
-            console.error('Error en debug logout:', e);
-        }
-    };
-
-    // --- [ACTUALIZADO] ---
+    // --- Navegación ---
     const handleVisitors = () => router.push('/(resident)/guests');
-    
-    const handleVehicles = () => router.push('/(resident)/vehicles'); // Asumo que esta ya la tenías
+    const handleVehicles = () => router.push('/(resident)/vehicules');
     const handleReservations = () => router.push('/(resident)/my_reservations');
     
-    // --- Renderizado (sin cambios) ---
+    // --- Renderizado (Loading) ---
     if (loading) {
         return (
             <SafeAreaView style={[styles.safeArea, styles.centered]}>
@@ -164,6 +143,7 @@ export default function InformationScreen() {
         );
     }
 
+    // --- Renderizado (Contenido) ---
     return (
         <SafeAreaView style={styles.safeArea}>
             <StatusBar barStyle="dark-content" />
@@ -186,7 +166,7 @@ export default function InformationScreen() {
                     <View style={styles.infoCard}>
                         <InfoRow iconName="envelope" label="Correo Electrónico" value={userData.correo} />
                         <View style={styles.divider} />
-                        <InfoRow iconName="key" label="Cambiar Contraseña" onPress={() => alert('Ir a cambiar contraseña')} />
+                        <InfoRow iconName="key" label="Cambiar Contraseña" onPress={() => router.push('/(auth)/change-password')} />
                     </View>
                 </View>
 
@@ -194,7 +174,6 @@ export default function InformationScreen() {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Acciones</Text>
                     <View style={styles.infoCard}>
-                        {/* Este botón ahora funciona */}
                         <InfoRow iconName="user-check" label="Visitantes" onPress={handleVisitors} />
                         <View style={styles.divider} />
                         <InfoRow iconName="car" label="Tus Vehículos" onPress={handleVehicles} />
@@ -206,7 +185,7 @@ export default function InformationScreen() {
                 {/* 4. Botón de Cerrar Sesión */}
                 <TouchableOpacity 
                     style={styles.logoutButton} 
-                    onPress={debugLogout}
+                    onPress={handleLogout} // Asegúrate de que llama a la función de diagnóstico
                 >
                     <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
                 </TouchableOpacity>
