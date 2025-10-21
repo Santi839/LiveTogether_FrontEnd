@@ -58,7 +58,7 @@ export default function PackagesScreen() {
 
   const fetchPackages = async () => {
     try {
-      const response = await axios.get('http://localhost:8000   /api/paquetes/');
+      const response = await axios.get('http://localhost:8000/api/paquetes/');
       setPackages(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Error al obtener los paquetes:", error);

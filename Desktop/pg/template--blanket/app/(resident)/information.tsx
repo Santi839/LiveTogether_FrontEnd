@@ -1,4 +1,5 @@
 import { FontAwesome5 } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -34,10 +35,9 @@ const initialUserData: UserData = {
     foto: '../../assets/images/PROFILE_IMAGE.png',
 };
 
-// --- [ACTUALIZADO] Constante de color secundario ---
-const SECONDARY_COLOR = '#6A92E5'; // Nuevo color secundario
+const SECONDARY_COLOR = '#6A92E5';
 
-// --- Componente reutilizable para filas de información y acciones ---
+// --- Componente InfoRow (sin cambios) ---
 const InfoRow = ({ iconName, label, value, onPress }: { iconName: string, label: string, value?: string, onPress?: () => void }) => {
     const content = (
         <View style={styles.infoRowContent}>
@@ -63,7 +63,7 @@ export default function InformationScreen() {
     const [userData, setUserData] = useState<UserData>(initialUserData);
     const [loading, setLoading] = useState(true);
 
-    // --- Lógica de carga de datos y logout (SIN CAMBIOS) ---
+    // --- Lógica de carga de datos (sin cambios) ---
     useEffect(() => {
         const fetchUserData = async () => {
             try {
@@ -94,6 +94,7 @@ export default function InformationScreen() {
         fetchUserData();
     }, []);
     
+    // --- Lógica de Logout (mejorada con logs y debug) ---
     const handleLogout = () => {
         Alert.alert(
             'Cerrar Sesión',
@@ -104,10 +105,21 @@ export default function InformationScreen() {
                     text: 'Aceptar',
                     onPress: async () => {
                         try {
+                            console.log('Iniciando proceso de logout...');
                             await logout();
-                        } catch (error) {
-                            console.error('Error al cerrar sesión:', error);
-                            Alert.alert('Error', 'No se pudo cerrar la sesión.');
+                            console.log('Logout completado exitosamente');
+                            // Como backup, forzamos la redirección si no salió
+                            router.replace('/(auth)/login');
+                        } catch (error: any) {
+                            console.error('Error detallado al cerrar sesión:', error);
+                            console.error('Mensaje:', error.message);
+                            if (error.response) {
+                                console.error('Respuesta del servidor:', error.response.data);
+                            }
+                            Alert.alert(
+                                'Error',
+                                'No se pudo cerrar la sesión. Por favor, intenta nuevamente.'
+                            );
                         }
                     },
                 },
@@ -115,10 +127,34 @@ export default function InformationScreen() {
         );
     };
 
-    const handleVisitors = () => alert("Navegar a Visitantes");
-    const handleVehicles = () => alert("Navegar a Vehículos");
+    // Botón temporal para debug (quitar después)
+    const debugLogout = async () => {
+        try {
+            const token = await AsyncStorage.getItem('token');
+            const role = await AsyncStorage.getItem('userRole');
+            console.log('Debug - Estado antes del logout:');
+            console.log('Token:', token ? 'Existe' : 'No existe');
+            console.log('Role:', role);
+            
+            await logout();
+            
+            const tokenAfter = await AsyncStorage.getItem('token');
+            const roleAfter = await AsyncStorage.getItem('userRole');
+            console.log('Debug - Estado después del logout:');
+            console.log('Token:', tokenAfter ? 'Existe' : 'No existe');
+            console.log('Role:', roleAfter);
+        } catch (e) {
+            console.error('Error en debug logout:', e);
+        }
+    };
+
+    // --- [ACTUALIZADO] ---
+    const handleVisitors = () => router.push('/(resident)/guests');
+    
+    const handleVehicles = () => router.push('/(resident)/vehicles'); // Asumo que esta ya la tenías
     const handleReservations = () => router.push('/(resident)/my_reservations');
     
+    // --- Renderizado (sin cambios) ---
     if (loading) {
         return (
             <SafeAreaView style={[styles.safeArea, styles.centered]}>
@@ -135,7 +171,7 @@ export default function InformationScreen() {
                 {/* 1. Cabecera de Perfil */}
                 <View style={styles.profileHeader}>
                     <Image
-                        source={require('../../assets/images/PROFILE_IMAGE.png')} // Usar userData.foto cuando funcione la URL
+                        source={require('../../assets/images/PROFILE_IMAGE.png')}
                         style={styles.profileImage}
                     />
                     <Text style={styles.profileName}>{userData.nombre_completo}</Text>
@@ -158,6 +194,7 @@ export default function InformationScreen() {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Acciones</Text>
                     <View style={styles.infoCard}>
+                        {/* Este botón ahora funciona */}
                         <InfoRow iconName="user-check" label="Visitantes" onPress={handleVisitors} />
                         <View style={styles.divider} />
                         <InfoRow iconName="car" label="Tus Vehículos" onPress={handleVehicles} />
@@ -167,7 +204,10 @@ export default function InformationScreen() {
                 </View>
 
                 {/* 4. Botón de Cerrar Sesión */}
-                <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                <TouchableOpacity 
+                    style={styles.logoutButton} 
+                    onPress={debugLogout}
+                >
                     <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
                 </TouchableOpacity>
 
@@ -176,7 +216,8 @@ export default function InformationScreen() {
     );
 }
 
-// --- [ACTUALIZADOS] Estilos con el nuevo color secundario ---
+
+// --- Estilos (sin cambios) ---
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
@@ -195,7 +236,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#333'
     },
-    // --- Cabecera de Perfil ---
     profileHeader: {
         alignItems: 'center',
         paddingVertical: 30,
@@ -205,7 +245,7 @@ const styles = StyleSheet.create({
         height: 100,
         borderRadius: 50,
         borderWidth: 3,
-        borderColor: SECONDARY_COLOR, // Borde de la imagen de perfil con el color secundario
+        borderColor: SECONDARY_COLOR,
         marginBottom: 15,
     },
     profileName: {
@@ -219,14 +259,13 @@ const styles = StyleSheet.create({
         color: '#666',
         marginTop: 4,
     },
-    // --- Secciones ---
     section: {
         marginBottom: 25,
     },
     sectionTitle: {
         fontSize: 16,
         fontFamily: 'Raleway-Bold',
-        color: SECONDARY_COLOR, // Títulos de sección con el color secundario
+        color: SECONDARY_COLOR,
         marginBottom: 10,
         textTransform: 'uppercase',
     },
@@ -236,7 +275,6 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#E8E8E8',
     },
-    // --- Fila de Información ---
     infoRowContent: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -246,7 +284,7 @@ const styles = StyleSheet.create({
     infoRowIcon: {
         width: 30,
         textAlign: 'center',
-        color: SECONDARY_COLOR, // Íconos de fila con el color secundario
+        color: SECONDARY_COLOR,
     },
     infoRowTextContainer: {
         flex: 1,
@@ -268,17 +306,16 @@ const styles = StyleSheet.create({
         backgroundColor: '#F0F0F0',
         marginHorizontal: 15,
     },
-    // --- Botón de Cerrar Sesión ---
     logoutButton: {
         borderWidth: 1,
-        borderColor: '#E57373', // Un rojo más suave para el borde
+        borderColor: '#E57373',
         borderRadius: 12,
         padding: 15,
         alignItems: 'center',
         marginTop: 20,
     },
     logoutButtonText: {
-        color: '#D32F2F', // Un rojo estándar para el texto
+        color: '#D32F2F',
         fontSize: 16,
         fontFamily: 'Raleway-Bold',
     },

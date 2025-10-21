@@ -1,15 +1,17 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import DateTimePicker from '@react-native-community/datetimepicker';
+// import DateTimePicker from '@react-native-community/datetimepicker'; // Ya no se usa
 import axios from 'axios';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
+// 1. IMPORTAR EL NUEVO COMPONENTE DE CALENDARIO
+import { Calendar, LocaleConfig } from 'react-native-calendars';
 import {
     ActivityIndicator,
     Image,
     Platform,
-    Pressable,
-    PressableStateCallbackType,
+    // Pressable, // Ya no se usa
+    // PressableStateCallbackType, // Ya no se usa
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -26,16 +28,41 @@ const CARD_BG = '#FFFFFF';
 const ACCENT_COLOR = '#6A87D8';
 const MAIN_COLOR = '#001F3F';
 const TEXT_COLOR = '#333333';
+const ACCENT_COLOR_LIGHT = '#6A87D820'; // Color para items no seleccionados
 
-// 🔑 URLs de tu API
+// 2. CONFIGURAR IDIOMA ESPAÑOL PARA EL CALENDARIO
+LocaleConfig.locales['es'] = {
+  monthNames: [
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
+  ],
+  monthNamesShort: ['Ene.', 'Feb.', 'Mar.', 'Abr.', 'May.', 'Jun.', 'Jul.', 'Ago.', 'Sep.', 'Oct.', 'Nov.', 'Dic.'],
+  dayNames: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
+  dayNamesShort: ['D', 'L', 'M', 'M', 'J', 'V', 'S'],
+  today: "Hoy"
+};
+LocaleConfig.defaultLocale = 'es';
+
+
+// URLs de tu API
 import '../../utils/axios-config'; // Importamos la configuración global de axios
 
 // Endpoints relativos
-const SPACES_ENDPOINT = '/api/espacios-comunes/';    // Endpoint para obtener detalles del espacio (GET)
-const RESERVES_ENDPOINT = '/api/reservas/';   // Endpoint para crear la reserva (POST)
+const SPACES_ENDPOINT = '/api/espacios-comunes/'; 	// Endpoint para obtener detalles del espacio (GET)
+const RESERVES_ENDPOINT = '/api/reservas/'; 	// Endpoint para crear la reserva (POST)
 
 
-// 🔑 INTERFACES
+// INTERFACES
 interface SpaceDetailFromDB {
     id: number;
     nombre: string;
@@ -60,26 +87,36 @@ interface Reservation {
     cantidad_personas: number;
 }
 
+// DATOS DE EJEMPLO PARA LA CUADRÍCULA DE HORAS
+const MOCK_TIME_SLOTS = [
+    "12:00", "12:30", "13:00",
+    "14:00", "14:30", "15:30",
+    "16:00", "16:30", "17:00",
+    "18:00", "18:30", "19:00",
+    "19:30", "21:00",
+];
+
 
 // --- PANTALLA PRINCIPAL ---
 
 export default function ReservationDetailsScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
 
-    // 🔑 ESTADOS
+    // ESTADOS
     const [reservationData, setReservationData] = useState<SpaceDetailFromDB | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [isBooking, setIsBooking] = useState<boolean>(false);
+    
+    // ESTADOS PARA EL FLUJO DE PASOS
+    const [step, setStep] = useState(1); // 1 = Fecha, 2 = Hora y Personas
+    const [isConfirmed, setIsConfirmed] = useState(false); // 3 = Confirmación
 
-    // 🔑 ESTADOS PARA EL FORMULARIO
+    // ESTADOS PARA EL FORMULARIO
     const [selectedDate, setSelectedDate] = useState(new Date());
-    const [startTime, setStartTime] = useState(new Date());
-    const [endTime, setEndTime] = useState(new Date(new Date().setHours(new Date().getHours() + 1)));
     const [guestCount, setGuestCount] = useState('1');
-    const [showPicker, setShowPicker] = useState<{
-        show: boolean;
-        type: 'date' | 'startTime' | 'endTime' | null;
-    }>({ show: false, type: null });
+    const [selectedDateString, setSelectedDateString] = useState(new Date().toISOString().split('T')[0]);
+    const [selectedTime, setSelectedTime] = useState<string | null>(null); // Ej: "14:00"
+
 
     // Obtener el máximo de personas del parámetro
     const { maxCapacity } = useLocalSearchParams<{ maxCapacity: string }>();
@@ -113,49 +150,21 @@ export default function ReservationDetailsScreen() {
     }, [id]); // Dependencia del ID para recargar si cambia
 
 
-    // Manejador unificado para los pickers
-    const handlePickerChange = (event: any, selectedDate?: Date) => {
-        if (!selectedDate) return;
+    // 2. LÓGICA DE MANEJO DE PICKERS ELIMINADA (ya no se usa)
 
-        const { type } = event;
 
-        // Para Android, actualizar inmediatamente
-        if (Platform.OS === 'android') {
-            if (type === 'set') {
-                updatePickerValue(selectedDate);
-            }
-            setShowPicker({ show: false, type: null });
-            return;
-        }
+    // HANDLER PARA EL NUEVO CALENDARIO (CORREGIDO)
+    const onDayPress = (day: any) => { // 'day' es de tipo DateData
+      console.log('selected day', day.dateString);
+      setSelectedDateString(day.dateString);
+      
+      const [year, month, dayStr] = day.dateString.split('-').map(Number);
+      // El mes del calendario (month) está basado en 1, pero el constructor de Date (monthIndex) está basado en 0.
+      const dateObject = new Date(year, month - 1, dayStr);
 
-        // Para iOS, solo actualizar cuando se presiona "Aceptar"
-        if (type === 'set') {
-            updatePickerValue(selectedDate);
-            setShowPicker({ show: false, type: null });
-        }
+      setSelectedDate(dateObject);
     };
 
-    const updatePickerValue = (value: Date) => {
-        switch (showPicker.type) {
-            case 'date':
-                setSelectedDate(value);
-                break;
-            case 'startTime':
-                setStartTime(value);
-                // Actualizar automáticamente la hora de fin una hora después
-                const newEndTime = new Date(value);
-                newEndTime.setHours(value.getHours() + 1);
-                setEndTime(newEndTime);
-                break;
-            case 'endTime':
-                setEndTime(value);
-                break;
-        }
-    };
-
-    const showPickerFor = (type: 'date' | 'startTime' | 'endTime') => {
-        setShowPicker({ show: true, type });
-    };
 
     // Formateadores de fecha y hora
     const formatDate = (date: Date) => {
@@ -165,7 +174,7 @@ export default function ReservationDetailsScreen() {
             day: '2-digit'
         });
     };
-
+    
     const formatTime = (date: Date) => {
         return date.toLocaleTimeString('es-ES', {
             hour: '2-digit',
@@ -174,13 +183,19 @@ export default function ReservationDetailsScreen() {
         });
     };
 
-    // 2. LÓGICA DE CREACIÓN DE RESERVA (POST)
+    // 3. LÓGICA DE CREACIÓN DE RESERVA (POST)
     const handleBooking = async () => {
         if (isBooking) return;
+
+        if (!selectedTime) {
+            showToast('Por favor, selecciona un horario.', '#FF5252');
+            return;
+        }
+
         setIsBooking(true);
 
         try {
-            if (!selectedDate || !startTime || !endTime) {
+            if (!selectedDate || !selectedTime) {
                 showToast('Selecciona una fecha y rango horario.', '#FF5252');
                 return;
             }
@@ -192,14 +207,22 @@ export default function ReservationDetailsScreen() {
                 return;
             }
 
-            // Obtener el ID del usuario del token (asumiendo que es 1 por ahora)
             const userId = 1;
+
+            // Calcular hora_inicio y hora_fin desde selectedTime
+            const [hour, minute] = selectedTime.split(':').map(Number);
+            
+            const startTimeObj = new Date(selectedDate); 
+            startTimeObj.setHours(hour, minute, 0, 0); 
+            
+            // Asumimos slots de 30 minutos
+            const endTimeObj = new Date(startTimeObj.getTime() + 30 * 60000); 
 
             const reservationData = {
                 id_espacio: id,
                 fecha: selectedDate.toISOString().split('T')[0],
-                hora_inicio: formatTime(startTime),
-                hora_fin: formatTime(endTime),
+                hora_inicio: formatTime(startTimeObj), // Ej: "14:00"
+                hora_fin: formatTime(endTimeObj),     // Ej: "14:30"
                 id_usuario: userId,
                 cantidad_personas: parseInt(guestCount)
             };
@@ -218,12 +241,7 @@ export default function ReservationDetailsScreen() {
             );
 
             console.log('✅ Reserva creada:', response.data);
-            showToast('✅ Tu reserva fue creada con éxito.', '#4CAF50');
-
-            // Redirigir a la lista de reservas
-            setTimeout(() => {
-                router.push('/(resident)/reservations');
-            }, 2000);
+            setIsConfirmed(true); // Muestra la pantalla de confirmación
 
         } catch (error: any) {
             console.error('Error al reservar:', error);
@@ -247,7 +265,7 @@ export default function ReservationDetailsScreen() {
         });
     };
 
-    // 3. ESTADO DE CARGA Y ERROR
+    // 4. ESTADO DE CARGA Y ERROR
     if (isLoading) {
         return (
             <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -268,10 +286,54 @@ export default function ReservationDetailsScreen() {
         );
     }
 
-    // 4. RENDERIZADO PRINCIPAL
+    // 🔑 5. RENDERIZADO DEL PASO 3: PANTALLA DE CONFIRMACIÓN (MODIFICADO)
+    if (isConfirmed) {
+        return (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: CARD_BG }]}>
+                <StatusBar barStyle="dark-content" />
+                <Text style={styles.confirmationTitle}>Reserva confirmada</Text>
+                <View style={styles.checkContainer}>
+                    <FontAwesome5 name="check" size={80} color="#4CAF50" />
+                </View>
 
-    // 🔑 Necesitas una imagen de fondo. Como no viene de la DB, usa una por defecto.
+                {/* Botón 1: Ver mis reservas (Principal) */}
+                <TouchableOpacity
+                    style={[styles.bookButton, { width: '100%', marginTop: 40 }]}
+                    onPress={() => router.replace('/(resident)/reservations')} 
+                >
+                    <Text style={styles.bookButtonText}>Ver mis reservas</Text>
+                </TouchableOpacity>
+
+                {/* 🔑 Botón 2: Hacer otra reserva (Secundario) */}
+                <TouchableOpacity
+                    style={[styles.bookButton, styles.secondaryButton, { width: '100%', marginTop: 15 }]}
+                    onPress={() => {
+                        // Resetea el estado para volver al paso 1
+                        setIsConfirmed(false);
+                        setStep(1);
+                        setSelectedTime(null);
+                        setGuestCount('1');
+                        // Mantenemos la fecha seleccionada por si quieren reservar otro día cercano
+                    }}
+                >
+                    <Text style={styles.secondaryButtonText}>Hacer otra reserva</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
+
+    // 5. RENDERIZADO PRINCIPAL (PASOS 1 Y 2)
+
     const defaultHeroImage = require('../../assets/images/piscina.jpg');
+
+    const markedDates = {
+      [selectedDateString]: {
+        selected: true,
+        selectedColor: ACCENT_COLOR,
+        selectedTextColor: 'white',
+        disableTouchEvent: true,
+      },
+    };
 
     return (
         <View style={styles.container}>
@@ -280,9 +342,18 @@ export default function ReservationDetailsScreen() {
 
             <Image source={defaultHeroImage} style={styles.heroImage} resizeMode="cover" />
 
-            {/* Botón de regreso */}
+            {/* Botón de regreso (funciona para ambos pasos) */}
             <View style={styles.overlay}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                <TouchableOpacity 
+                    onPress={() => {
+                        if (step === 2) {
+                            setStep(1); // Si está en el paso 2, vuelve al 1
+                        } else {
+                            router.back(); // Si está en el paso 1, vuelve atrás
+                        }
+                    }} 
+                    style={styles.backButton}
+                >
                     <FontAwesome5 name="arrow-left" size={20} color="white" />
                 </TouchableOpacity>
             </View>
@@ -297,200 +368,141 @@ export default function ReservationDetailsScreen() {
                         </Text>
                     </View>
 
-                    {/* DESCRIPCIÓN */}
-                    <Text style={styles.subTitle}>Descripción</Text>
-                    <Text style={styles.descriptionText}>{reservationData.descripcion}</Text>
-                    <View style={styles.separator} />
+                    {/* CONTENIDO CONDICIONAL POR PASO */}
 
+                    {/* --- PASO 1: CALENDARIO --- */}
+                    {step === 1 && (
+                        <>
+                            {/* DESCRIPCIÓN */}
+                            <Text style={styles.subTitle}>Descripción</Text>
+                            <Text style={styles.descriptionText}>{reservationData.descripcion}</Text>
+                            <View style={styles.separator} />
+
+                            {/* CALENDARIO VISUAL */}
+                            <Text style={styles.subTitle}>Reserva tu fecha</Text>
+                            <Calendar
+                                style={styles.calendar}
+                                onDayPress={onDayPress}
+                                markedDates={markedDates}
+                                minDate={new Date().toISOString().split('T')[0]} 
+                                theme={{
+                                    arrowColor: ACCENT_COLOR,
+                                    todayTextColor: ACCENT_COLOR,
+                                    textSectionTitleColor: ACCENT_COLOR,
+                                }}
+                            />
+                        </>
+                    )}
+
+                    {/* --- PASO 2: SELECCIÓN DE HORA --- */}
+                    {step === 2 && (
+                        <>
+                            <Text style={styles.subTitle}>Selecciona el horario</Text>
+                            <Text style={styles.descriptionText}>
+                                Para el día: {formatDate(selectedDate)}
+                            </Text>
+                            
+                            <View style={styles.timeSlotContainer}>
+                                {MOCK_TIME_SLOTS.map((time) => {
+                                    const isSelected = selectedTime === time;
+                                    return (
+                                        <TouchableOpacity
+                                            key={time}
+                                            style={[
+                                                styles.timeSlotButton,
+                                                isSelected
+                                                    ? styles.timeSlotSelected
+                                                    : styles.timeSlotUnselected
+                                            ]}
+                                            onPress={() => setSelectedTime(time)}
+                                        >
+                                            <Text 
+                                                style={
+                                                    isSelected
+                                                        ? styles.timeSlotTextSelected
+                                                        : styles.timeSlotTextUnselected
+                                                }
+                                            >
+                                                {time}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </View>
+                        </>
+                    )}
+                    
+                    {/* Separador para dar espacio antes del footer */}
+                    <View style={styles.separator} /> 
 
                 </View>
             </ScrollView>
 
             {/* FOOTER CON BOTÓN DE RESERVA */}
             <View style={styles.footer}>
-                <View style={styles.selectionRow}>
-                    <Pressable
-                        onPress={() => showPickerFor('date')}
-                        style={({ pressed }: PressableStateCallbackType) => [
-                            styles.dateTimeButton,
-                            { opacity: pressed ? 0.7 : 1 }
-                        ]}
-                    >
-                        <Text style={styles.labelTime}>Fecha</Text>
-                        <Text style={styles.valueTime}>{formatDate(selectedDate)}</Text>
-                    </Pressable>
-                    <View>
-                        <Text style={styles.labelTime}>Hora</Text>
-                        <View style={styles.timeContainer}>
-                            <Pressable
-                                onPress={() => showPickerFor('startTime')}
-                                style={({ pressed }: PressableStateCallbackType) => [
-                                    styles.timeButton,
-                                    { opacity: pressed ? 0.7 : 1 }
-                                ]}
-                            >
-                                <Text style={styles.valueTime}>{formatTime(startTime)}</Text>
-                            </Pressable>
-                            <Text style={styles.valueTime}> - </Text>
-                            <Pressable
-                                onPress={() => showPickerFor('endTime')}
-                                style={({ pressed }: PressableStateCallbackType) => [
-                                    styles.timeButton,
-                                    { opacity: pressed ? 0.7 : 1 }
-                                ]}
-                            >
-                                <Text style={styles.valueTime}>{formatTime(endTime)}</Text>
-                            </Pressable>
-                        </View>
-                    </View>
-                </View>
 
-                {/* Picker Unificado */}
-                {showPicker.show && (
-                    <>
-                        {Platform.OS === 'android' ? (
-                            <DateTimePicker
-                                value={
-                                    showPicker.type === 'date'
-                                        ? selectedDate
-                                        : showPicker.type === 'startTime'
-                                            ? startTime
-                                            : endTime
-                                }
-                                mode={showPicker.type === 'date' ? 'date' : 'time'}
-                                is24Hour={true}
-                                onChange={handlePickerChange}
-                                minimumDate={showPicker.type === 'date' ? new Date() : undefined}
-                            />
-                        ) : (
-                            <View style={styles.pickerContainer}>
-                                <DateTimePicker
-                                    value={
-                                        showPicker.type === 'date'
-                                            ? selectedDate
-                                            : showPicker.type === 'startTime'
-                                                ? startTime
-                                                : endTime
-                                    }
-                                    mode={showPicker.type === 'date' ? 'date' : 'time'}
-                                    is24Hour={true}
-                                    display="spinner"
-                                    onChange={handlePickerChange}
-                                    minimumDate={showPicker.type === 'date' ? new Date() : undefined}
-                                />
-                                <View style={styles.pickerButtonsContainer}>
-                                    <TouchableOpacity
-                                        style={[styles.pickerButton, { backgroundColor: '#ff4444' }]}
-                                        onPress={() => setShowPicker({ show: false, type: null })}
-                                    >
-                                        <Text style={styles.pickerButtonText}>Cancelar</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={[styles.pickerButton, { backgroundColor: ACCENT_COLOR }]}
-                                        onPress={() => {
-                                            const currentValue = showPicker.type === 'date'
-                                                ? selectedDate
-                                                : showPicker.type === 'startTime'
-                                                    ? startTime
-                                                    : endTime;
-                                            handlePickerChange({ type: 'set' }, currentValue);
-                                        }}
-                                    >
-                                        <Text style={styles.pickerButtonText}>Aceptar</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        )}
-                    </>
+                {/* FOOTER CONDICIONAL POR PASO */}
+                
+                {/* --- FOOTER PASO 1: BOTÓN DE SIGUIENTE --- */}
+                {step === 1 && (
+                    <TouchableOpacity
+                        style={styles.bookButton}
+                        onPress={() => setStep(2)} // Avanza al paso 2
+                    >
+                        <Text style={styles.bookButtonText}>Seleccionar Horario</Text>
+                    </TouchableOpacity>
                 )}
 
-                <View style={styles.guestCountContainer}>
-                    <Text style={styles.labelTime}>Cantidad de personas</Text>
-                    <TextInput
-                        style={styles.guestInput}
-                        value={guestCount}
-                        onChangeText={(text) => {
-                            const count = parseInt(text) || 0;
-                            if (count <= maxGuests) {
-                                setGuestCount(text);
-                            }
-                        }}
-                        keyboardType="numeric"
-                        placeholder="Número de personas"
-                        maxLength={2}
-                    />
-                    <Text style={styles.maxGuestsText}>
-                        Máximo: {maxGuests} personas
-                    </Text>
-                </View>
+                {/* --- FOOTER PASO 2: PERSONAS Y BOTÓN DE RESERVA --- */}
+                {step === 2 && (
+                    <>
+                        <View style={styles.guestCountContainer}>
+                            <Text style={styles.labelTime}>Cantidad de personas</Text>
+                            <TextInput
+                                style={styles.guestInput}
+                                value={guestCount}
+                                onChangeText={(text) => {
+                                    const count = parseInt(text) || 0;
+                                    if (count <= maxGuests) {
+                                        setGuestCount(text);
+                                    }
+                                }}
+                                keyboardType="numeric"
+                                placeholder="Número de personas"
+                                maxLength={2}
+                            />
+                            <Text style={styles.maxGuestsText}>
+                                Máximo: {maxGuests} personas
+                            </Text>
+                        </View>
 
-                <TouchableOpacity
-                    style={[styles.bookButton, { opacity: isBooking ? 0.6 : 1 }]}
-                    onPress={handleBooking}
-                    disabled={isBooking || parseInt(guestCount) < 1 || parseInt(guestCount) > maxGuests}
-                >
-                    {isBooking ? (
-                        <ActivityIndicator color="white" />
-                    ) : (
-                        <Text style={styles.bookButtonText}>
-                            Reservar
-                        </Text>
-                    )}
-                </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[
+                                styles.bookButton, 
+                                { opacity: (isBooking || !selectedTime) ? 0.6 : 1 }
+                            ]}
+                            onPress={handleBooking} // Llama a la API
+                            disabled={isBooking || !selectedTime || parseInt(guestCount) < 1 || parseInt(guestCount) > maxGuests}
+                        >
+                            {isBooking ? (
+                                <ActivityIndicator color="white" />
+                            ) : (
+                                <Text style={styles.bookButtonText}>
+                                    Reservar
+                                </Text>
+                            )}
+                        </TouchableOpacity>
+                    </>
+                )}
             </View>
             <Toast />
         </View>
     );
 }
 
-// --- ESTILOS (sin cambios relevantes en la estructura) ---
+// --- ESTILOS (Añadí estilos para el botón secundario) ---
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: LIGHT_BG },
-    pickerContainer: {
-        backgroundColor: '#fff',
-        borderRadius: 10,
-        padding: 15,
-        ...Platform.select({
-            ios: {
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.25,
-                shadowRadius: 4,
-            },
-            android: {
-                elevation: 5,
-            },
-        }),
-    },
-    doneButton: {
-        backgroundColor: ACCENT_COLOR,
-        padding: 10,
-        borderRadius: 8,
-        alignItems: 'center',
-        marginTop: 10,
-    },
-    doneButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontFamily: 'Raleway-Bold',
-    },
-    dateTimeButton: {
-        backgroundColor: '#fff',
-        padding: 8,
-        borderRadius: 8,
-        minWidth: 120,
-    },
-    timeContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 5,
-    },
-    timeButton: {
-        backgroundColor: '#fff',
-        padding: 8,
-        borderRadius: 8,
-        minWidth: 60,
-    },
     heroImage: { width: '100%', height: 350, position: 'absolute', top: 0 },
     overlay: { position: 'absolute', top: 50, left: 20, zIndex: 10 },
     backButton: { backgroundColor: 'rgba(0,0,0,0.5)', padding: 10, borderRadius: 10 },
@@ -556,18 +568,24 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontFamily: 'Raleway-Regular',
         color: TEXT_COLOR,
-        lineHeight: 24
-    },
-    detailText: {
-        fontSize: 15,
-        fontFamily: 'Raleway-Regular',
-        color: TEXT_COLOR,
-        lineHeight: 22,
+        lineHeight: 24,
+        marginBottom: 5,
     },
     separator: {
         height: 1,
         backgroundColor: '#eee',
         marginVertical: 20,
+    },
+    calendar: {
+        marginBottom: 10,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#eee',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
     },
 
     footer: {
@@ -581,24 +599,11 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: '#eee',
     },
-    selectionRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 15,
-        backgroundColor: LIGHT_BG,
-        padding: 10,
-        borderRadius: 10,
-    },
-    labelTime: {
+    labelTime: { // Re-utilizado para "Cantidad de Personas"
         fontSize: 14,
         fontFamily: 'Raleway-Regular',
         color: TEXT_COLOR,
-    },
-    valueTime: {
-        fontSize: 16,
-        fontFamily: 'Raleway-Bold',
-        color: MAIN_COLOR,
-        marginTop: 3,
+        marginBottom: 5, 
     },
     bookButton: {
         backgroundColor: ACCENT_COLOR,
@@ -608,6 +613,18 @@ const styles = StyleSheet.create({
     },
     bookButtonText: {
         color: 'white',
+        fontSize: 18,
+        fontFamily: 'Raleway-Bold',
+        fontWeight: 'normal',
+    },
+    // 🔑 ESTILOS PARA EL BOTÓN SECUNDARIO
+    secondaryButton: {
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        borderColor: ACCENT_COLOR,
+    },
+    secondaryButtonText: {
+        color: ACCENT_COLOR,
         fontSize: 18,
         fontFamily: 'Raleway-Bold',
         fontWeight: 'normal',
@@ -630,22 +647,59 @@ const styles = StyleSheet.create({
         color: ACCENT_COLOR,
         marginTop: 10,
     },
-    pickerButtonsContainer: {
+    // --- NUEVOS ESTILOS PARA PASO 2 (Horas) ---
+    timeSlotContainer: {
         flexDirection: 'row',
+        flexWrap: 'wrap',
         justifyContent: 'space-between',
-        paddingHorizontal: 10,
-        paddingVertical: 5,
+        marginTop: 10,
     },
-    pickerButton: {
-        paddingVertical: 8,
-        paddingHorizontal: 20,
-        borderRadius: 5,
-        minWidth: 100,
+    timeSlotButton: {
+        width: '31%', // Para 3 columnas
+        paddingVertical: 12,
+        borderRadius: 8,
         alignItems: 'center',
+        marginBottom: 10,
+        borderWidth: 1,
     },
-    pickerButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '500',
+    timeSlotUnselected: {
+        backgroundColor: CARD_BG,
+        borderColor: ACCENT_COLOR_LIGHT,
+    },
+    timeSlotSelected: {
+        backgroundColor: ACCENT_COLOR,
+        borderColor: ACCENT_COLOR,
+    },
+    timeSlotTextUnselected: {
+        color: ACCENT_COLOR,
+        fontSize: 14,
+        fontFamily: 'Raleway-Bold',
+    },
+    timeSlotTextSelected: {
+        color: CARD_BG,
+        fontSize: 14,
+        fontFamily: 'Raleway-Bold',
+    },
+
+    // --- NUEVOS ESTILOS PARA PASO 3 (Confirmación) ---
+    confirmationTitle: {
+        fontSize: 28,
+        fontFamily: 'Raleway-Bold',
+        color: MAIN_COLOR,
+        textAlign: 'center',
+        marginBottom: 30,
+    },
+    checkContainer: {
+        width: 160,
+        height: 160,
+        borderRadius: 80,
+        backgroundColor: '#FFFFFF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+        elevation: 5,
     },
 });
